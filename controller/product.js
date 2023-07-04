@@ -1,31 +1,23 @@
 const fs = require('fs');
-// const index = fs.readFileSync('index.html', 'utf-8');
-// const data = JSON.parse(fs.readFileSync('public/data.json', 'utf-8'));
-// const products = data.products;
 
 const model = require("../MODEL/product");
 const Product = model.Product;
 
 exports.createProduct = async (req, res) => {
-  // console.log(req.body);
-  // products.push(req.body);
-  const product = new Product();
-  product.title = "new phone";
-  product.description = "description here";
-  product.price = 0;
-  product.discountPercentage = 21;
-  product.rating = 0;
-  product.brand = "";
-  product.category = "phone";
-  product.thumbnail = "this is a new phone"
-  product.images = ["link1", "link2",]
 
-  // product.save((err,doc)=>{
+  const product = new Product(req.body);
+
+  // product.save((err,doc)=>{ // THIS IS DEPRECATED METHOD
   //   console.log({err,doc});
   // })
 
+try {
   await product.save();
+}catch(err){
+  res.status(405).json(err);
+}
 
+// TO USE AS A PROMISE
 //   product.save().then((result)=>{
 //     res.json({})
 //   }).catch((err)=>{console.log(err)})
@@ -33,32 +25,28 @@ exports.createProduct = async (req, res) => {
   res.status(201).json(req.body);
 };
 
-exports.getAllProducts = (req, res) => {
-  res.json(products);
+exports.getAllProducts = async (req, res) => {
+  const products = await Product.find({price:{$gt:600}});
+  res.status(200).json(products);
 };
 
-exports.getProduct = (req, res) => {
-  const id = +req.params.id;
-  const product = products.find((p) => p.id === id);
+exports.getProduct = async (req, res) => {
+  const id = req.params.id;
+  const product = await Product.findById(id);
   res.json(product);
 };
-exports.replaceProduct = (req, res) => {
-  const id = +req.params.id;
-  const productIndex = products.findIndex((p) => p.id === id);
-  products.splice(productIndex, 1, { ...req.body, id: id });
-  res.status(201).json();
+exports.replaceProduct = async (req, res) => {
+  const id = req.params.id;
+  const received = await Product.findOneAndReplace({_id:id},req.body,{new:true})
+  res.status(201).json(received);
 };
-exports.updateProduct = (req, res) => {
-  const id = +req.params.id;
-  const productIndex = products.findIndex((p) => p.id === id);
-  const product = products[productIndex];
-  products.splice(productIndex, 1, { ...product, ...req.body });
-  res.status(201).json();
+exports.updateProduct = async (req, res) => {
+  const id = req.params.id;
+  const received = await Product.findOneAndUpdate({_id:id},req.body,{new:true})
+  res.status(201).json(received);
 };
-exports.deleteProduct = (req, res) => {
-  const id = +req.params.id;
-  const productIndex = products.findIndex((p) => p.id === id);
-  const product = products[productIndex];
-  products.splice(productIndex, 1);
-  res.status(201).json(product);
+exports.deleteProduct = async (req, res) => {
+  const id = req.params.id;
+  const received = await Product.findOneAndDelete({_id:id})
+  res.status(201).json(received);
 };
